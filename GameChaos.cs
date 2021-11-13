@@ -29,8 +29,9 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     float interval = 0.5f;              
     float step = 60f;                   
     float lastPress;                    
-    float stepCount;                   
+    float stepCount;
 
+    int index;
     int currentFigure, nextFigure;      
     int figureState, figureType;        
     int[] currentIndexX = new int[4];   
@@ -44,10 +45,11 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     public GameParams gameParams;              
 
     bool canMoveDown;
-    bool canMoveSide = true;
+    bool canMoveSide;
     bool shouldMove;
+    bool couldChange;
 
-   
+
     public void OnPointerDown(PointerEventData eventData)
     {
         origin = eventData.position;
@@ -68,8 +70,13 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
         Vector2 currentPos = eventData.position;
         direction = currentPos - origin;
         stepCount = Mathf.Floor(direction.x / step);
-        /*  for (int i = 0; i < movingObject.Count; i++)
+          for (int i = 0; i < movingObject.Count; i++)
           {
+            if (originCurrentIndexX[i] + stepCount < 0) 
+            {
+                Debug.Log(currentIndexX[i]+"and orig"+originCurrentIndexX[i]);
+                break;
+            }
               if (stepCount > 0)
               {
                   for (int j = 1; j <= (int)stepCount; j++)
@@ -97,31 +104,41 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
                   }
               }
           }
-      LoopEnd:*/
+      LoopEnd:
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y) && canMoveSide)
         {
-         
+            couldChange = true;
+            Debug.Log(Field[0].Count);
             for (int i = 0; i < 4; i++)
             {
-
-                if ((originCurrentIndexX[i] + 1 * (int)(stepCount)) <= 0)
+                Debug.Log("checked"+ (originCurrentIndexX[i] + 1 * (int)(stepCount)));
+                if ((originCurrentIndexX[i] + 1 * (int)(stepCount)) < 0)
                 {
-
-
-                    for (int f = 0; f < Mathf.Abs(originCurrentIndexX[i] + 1 * (int)stepCount); f++)
-                    {
-                        for (int j = 0; j < Field[0].Count; j++)
-                        {
-                            Field[j].Insert(0, null);
-                        }
-                    }
-                    MainCamera.transform.position = new Vector3(cameraOriginPos.x + 0.4f * stepCount, cameraOriginPos.y, cameraOriginPos.z);
-                    movingObject[i].transform.position = new Vector3(originPosition[i].x + 0.4f * stepCount, originPosition[i].y);
-                    Border.transform.position = new Vector3(originBorderPos.x + 0.4f * stepCount, originBorderPos.y);
-                    canMoveSide = false;
+                    Debug.Log("Passed");
+                    couldChange = false;
+                    index = i;
+                    break;
 
                 }
-                else if (originCurrentIndexX[i] + 1 * (int)stepCount >= Field[0].Count - 1)
+            }
+            if (!couldChange)
+            {
+                for (int f = 0; f < Mathf.Abs(originCurrentIndexX[index] + 1 * (int)stepCount); f++)
+                {
+                    for (int j = 0; j < 21; j++)
+                    {
+                        Field[j].Insert(0, null);
+                    }
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    movingObject[i].transform.position = new Vector3(originPosition[i].x + 0.4f * stepCount, originPosition[i].y);
+                }
+                couldChange = false;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                if (originCurrentIndexX[i] + 1 * (int)stepCount >= Field[0].Count - 1)
                 {
 
                     for (int f = 0; f < originCurrentIndexX[i] + 1 * (int)stepCount - Field[0].Count - 1; f++)
@@ -131,16 +148,15 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
                             Field[j].Add(null);
                         }
                     }
-                    MainCamera.transform.position = new Vector3(cameraOriginPos.x + 0.4f * stepCount, cameraOriginPos.y, cameraOriginPos.z);
+
                     movingObject[i].transform.position = new Vector3(originPosition[i].x + 0.4f * stepCount, originPosition[i].y);
                     currentIndexX[i] = originCurrentIndexX[i] + 1 * ((int)stepCount);
-                    Border.transform.position = new Vector3(originBorderPos.x + 0.4f * stepCount, originBorderPos.y);
-                    canMoveSide = false;
+                    couldChange = false;
                 }
-
-
             }
-            if (shouldMove)
+
+            
+            if (couldChange)
             {
                 for (int i = 0; i < 4; i++)
                 {
@@ -150,7 +166,11 @@ public class GameChaos : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
                     currentIndexX[i] = originCurrentIndexX[i] + 1 * ((int)stepCount);
                 }
             }
-            canMoveSide = true;
+            else
+            {
+                Border.transform.position = new Vector3(originBorderPos.x + 0.4f * stepCount, originBorderPos.y);
+                MainCamera.transform.position = new Vector3(cameraOriginPos.x + 0.4f * stepCount, cameraOriginPos.y, cameraOriginPos.z);
+            }
         }
         else if (Mathf.Abs(direction.x) < Mathf.Abs(direction.y) && direction.y < -80 && shouldMove)
         {
